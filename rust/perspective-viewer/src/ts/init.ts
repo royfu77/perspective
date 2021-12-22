@@ -8,6 +8,8 @@
  *
  */
 
+import {decompressSync} from "fflate";
+
 import init_wasm from "@finos/perspective-viewer/dist/pkg/perspective_viewer.js";
 import wasm from "@finos/perspective-viewer/dist/pkg/perspective_viewer_bg.wasm";
 
@@ -21,7 +23,13 @@ window.addEventListener("unhandledrejection", (event) => {
 });
 
 async function load_wasm() {
-    return await init_wasm(await wasm);
+    const compressed = (await wasm) as unknown as ArrayBuffer;
+    // Unzip if needed
+    if (new Uint32Array(compressed.slice(0, 4))[0] == 559903) {
+        return await init_wasm(decompressSync(new Uint8Array(compressed)));
+    } else {
+        return await init_wasm(compressed);
+    }
 }
 
 export const WASM_MODULE = load_wasm();

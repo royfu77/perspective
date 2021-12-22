@@ -13,6 +13,7 @@ import {Client} from "./api/client.js";
 import {WebSocketClient} from "./websocket/client";
 
 import {override_config} from "./config/index.js";
+import {decompressSync} from "fflate";
 
 import wasm_worker from "@finos/perspective/src/js/perspective.worker.js";
 import wasm from "@finos/perspective/dist/pkg/esm/perspective.cpp.wasm";
@@ -47,6 +48,14 @@ const _override = /* @__PURE__ */ (function () {
                         const req = await fetch(_wasm);
                         this._wasm = await req.arrayBuffer();
                     }
+
+                    // Unzip if needed
+                    if (new Uint32Array(this._wasm.slice(0, 4))[0] == 559903) {
+                        this._wasm = decompressSync(
+                            new Uint8Array(this._wasm)
+                        ).buffer;
+                    }
+
                     return this._wasm;
                 }
             })();
